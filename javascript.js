@@ -1,32 +1,25 @@
+/* 
+    Creator: @debitcash
+    Each number on the top and bottom displays is represented as a collection of styled <div> elements, 
+    mimicking the segmented appearance of digits on real calculators. 
+    Each digit consists of 4 vertical and 3 horizontal segments, which are colored in specific combinations 
+    to resemble calculator-like digits.
+
+    Initially, both displays are populated with "greyed-out" segments that look like the number 8. 
+    When a user clicks a number button, the bottom display updates its segments to represent the chosen digit, 
+    while also appending the value to a string buffer. After selecting an operation, the calculation is performed using two operands 
+    parsed from the strings associated with each display.
+*/
+
 let bottomNumber = 0;
 let topNumber = 0;
 let operator = '';
 
-function paintFragment(fragment, color){
+// store string representation of top and bottom display numbers
+let topDisplayBuffer = '';
+let bottomDisplayBuffer = '';
 
-    if (fragment.classList[0] == 'vertical')
-    {
-        let topChild = fragment.querySelector('.top');
-        let centerChild = fragment.querySelector('.center');
-        let bottomChild = fragment.querySelector('.bottom');
-
-        topChild.style.borderBottomColor = color;
-        centerChild.style.backgroundColor = color;
-        bottomChild.style.borderTopColor = color;
-    }
-    else
-    {
-        let leftChild = fragment.querySelector('.left');
-        let centerChild = fragment.querySelector('.center');
-        let rightChild = fragment.querySelector('.right');
-
-        leftChild.style.borderRightColor = color;
-        centerChild.style.backgroundColor = color;
-        rightChild.style.borderLeftColor = color;
-    }
-    
-}
-
+// template html for one greyed out digit, includes 7 dashes: 3 horizontal and 4 vertical
 let numberHtml =` <div class="digit">
       <div class="horizontal" id="one">
         <div class="left"></div>
@@ -72,28 +65,28 @@ let numberHtml =` <div class="digit">
         <div class="right" ></div>
     </div>`
 
+// populate the top and bottom display with 6 greyed out digit containers on the start
 let topNumberContainer = document.querySelector('.topDisplay');
-function resetTopNumberContainer(){
-    topNumberContainer.innerHTML= '';
-    for (let i=0; i < 6; i++)
-        {
-            topNumberContainer.innerHTML += numberHtml
-        }
-}
-resetTopNumberContainer();
-
 let bottomNumberContainer = document.querySelector('.bottomDisplay');
-function resetBottomNumberContainer(){
-    bottomNumberContainer.innerHTML = '';
+
+function initialDisplaySetup(container){
+    container.innerHTML= '';
+
     for (let i=0; i < 6; i++)
     {
-        bottomNumberContainer.innerHTML += numberHtml
+        container.innerHTML += numberHtml
     }
 }
-resetBottomNumberContainer();
 
+initialDisplaySetup(topNumberContainer);
+initialDisplaySetup(bottomNumberContainer);
 
-let digitSegments = {'0':['one', 'four', 'five', 'six', 'seven', 'three'],
+// store the references to the freshly populated digit containers
+let bottomDigitContainer = [...document.querySelectorAll('.bottomDisplay .digit')];
+let topDigitContainer = [...document.querySelectorAll('.topDisplay .digit')];
+
+// each symbol has fragments(dashes) to be painted, in order to make the digit holder div look like a number
+const digitSegments = {'0':['one', 'four', 'five', 'six', 'seven', 'three'],
     '1':['five','seven'],
     '2':['one', 'five', 'two', 'six', 'three'],
     '3':['one', 'five', 'two', 'three', 'seven'],
@@ -109,11 +102,31 @@ let digitSegments = {'0':['one', 'four', 'five', 'six', 'seven', 'three'],
     'S':['one', 'four', 'two', 'seven', 'three']
 }
 
-let bottomDigitContainer = document.querySelectorAll('.bottomDisplay .digit');
-let topDigitContainer = document.querySelectorAll('.topDisplay .digit');
-bottomDigitContainer = [...bottomDigitContainer];
-topDigitContainer = [...topDigitContainer];
+// service funtion to paint a single fragment(dash)
+function paintFragment(fragment, color){
+    if (fragment.classList[0] == 'vertical')
+    {
+        let topChild = fragment.querySelector('.top');
+        let centerChild = fragment.querySelector('.center');
+        let bottomChild = fragment.querySelector('.bottom');
 
+        topChild.style.borderBottomColor = color;
+        centerChild.style.backgroundColor = color;
+        bottomChild.style.borderTopColor = color;
+    }
+    else
+    {
+        let leftChild = fragment.querySelector('.left');
+        let centerChild = fragment.querySelector('.center');
+        let rightChild = fragment.querySelector('.right');
+
+        leftChild.style.borderRightColor = color;
+        centerChild.style.backgroundColor = color;
+        rightChild.style.borderLeftColor = color;
+    }    
+}
+
+// paints the whole digit
 function displayDigit(numberStr,itemIndex, container){
     let segmentsToPaint = digitSegments[numberStr];
 
@@ -123,12 +136,9 @@ function displayDigit(numberStr,itemIndex, container){
     for (let i = 0; i < selectedFragments.length; i++){
         if (segmentsToPaint.includes(selectedFragments[i].id))
         {
-            // console.log(allFragments[i].id);
-            //console.log(selectedFragments[i]);
-            
             paintFragment(selectedFragments[i], '#39ff14');
         }
-}
+    }
 }
 
 function clearBottomDisplay(){
@@ -140,7 +150,7 @@ function clearBottomDisplay(){
             {
                 paintFragment(selectedFragments[i], '#2e2e2e');
             }
-}
+    }
 }
 
 function clearTopDisplay(){
@@ -152,111 +162,84 @@ function clearTopDisplay(){
             {
                 paintFragment(selectedFragments[i], '#2e2e2e');
             }
-}
+    }
 }
 
 function populateTopDisplay(numberStr){
     clearTopDisplay();
     for (let i = 0; i < numberStr.length; i++){
-            //let selectedContainer = topDigitContainer[i];
-            //let selectedFragments = selectedContainer.querySelectorAll('.vertical,.horizontal');
-            //console.log(numberStr[i]);
             displayDigit(numberStr[i], i, topDigitContainer);
-}
+    }
 }
 
 function populateBottomDisplay(numberStr){
     clearBottomDisplay();
     for (let i = 0; i < numberStr.length; i++){
-            //let selectedContainer = topDigitContainer[i];
-            //let selectedFragments = selectedContainer.querySelectorAll('.vertical,.horizontal');
-            //console.log(numberStr[i]);
             displayDigit(numberStr[i], i, bottomDigitContainer);
+    }
 }
-}
-//populateTopDisplay('523');
 
-//==========================================================
-//======================BUTTONS SETUP=======================
-//==========================================================
-//==========================================================
-
-let topDisplayBuffer = '';
-let bottomDisplayBuffer = '';
-
+// handle the function assignment to number buttons
 let digitButtons = document.querySelectorAll('.digitButton');
 
 digitButtons.forEach((element, index) => {element.addEventListener("click", (event) => 
-    {   //displayDigit(3,1);
+    {
+        // handle situation, when user starts new calculation without cleaning the result of previous operation
         if (topDisplayBuffer != '' && operator ==='')
         {
             clearTopDisplay();
             topDisplayBuffer = '';
-
         } 
 
+        // don't append the char to the number if it is already 6 chars long
         if (bottomDisplayBuffer.length == 6) return;
+
         if (index == 10)
             bottomDisplayBuffer += '0';
         else if (index ==9){
+            // prevent multiple period chars
             if (bottomDisplayBuffer.includes('.'))
                 return;
             bottomDisplayBuffer += '.';
         }
-        
         else 
             bottomDisplayBuffer += index + 1;
 
-        //console.log(bottomDisplayBuffer.length);
-        //for (let i=bottomDisplayBuffer.length - 1; i >= 0 ; i--)
         displayDigit(bottomDisplayBuffer[bottomDisplayBuffer.length - 1] , bottomDisplayBuffer.length - 1, bottomDigitContainer);
-
-        //console.log(bottomDisplayBuffer);
-        
     } );} );
 
+// handle the function assignment to equal button
 let equalsButton = document.querySelector('#equalsButton');
 equalsButton.addEventListener("click", (event)=>{
-    //if (operator == '')
-      //  return;
-
     if (bottomDisplayBuffer === '' || topDisplayBuffer=== '')
     {
         return;
     }
 
-    if (bottomDisplayBuffer == '00PS')
+    if (topDisplayBuffer == '00PS')
     {
         clearTopDisplay();
-        bottomDisplayBuffer = '';
+        topDisplayBuffer = '';
         return;
     }
         
-    
     bottomNumber = parseFloat(bottomDisplayBuffer);
-    /*
-    if (isNaN(bottomNumber))
-    {
-        return;
-    }
-    */
-    //console.log(operator, topNumber, bottomNumber);
 
     clearBottomDisplay();
     clearTopDisplay();
     topNumber = operate(operator, topNumber, bottomNumber)
-    //console.log(topNumber, '   111111111');
     topDisplayBuffer = topNumber.toString();
     
+    // handle situation when the result is longer than 6 chars
     if (topDisplayBuffer.length > 6)
     {
+        // trim the long floats 
         if (topDisplayBuffer.substring(0, 5).includes('.'))
         {
             topDisplayBuffer = topDisplayBuffer.substring(0, 6);
             console.log(topDisplayBuffer);
         }
         else{
-            console.log("TOO MUCH!!");
             bottomDisplayBuffer='';
             topDisplayBuffer='00PS';
             populateTopDisplay("00PS");
@@ -278,7 +261,6 @@ clearAllButton.addEventListener("click", (event)=>{
     bottomDisplayBuffer='';
     clearTopDisplay();
     topDisplayBuffer='';
-    //console.log("CLEARED ALL");
 });
 
 let backspace = document.querySelector('#backspace');
@@ -286,27 +268,24 @@ backspace.addEventListener("click", (event)=>{
     clearBottomDisplay();
     let newBuffer = bottomDisplayBuffer.length - 1;
     bottomDisplayBuffer = bottomDisplayBuffer.substring(0, newBuffer);
-    
-
     populateBottomDisplay(bottomDisplayBuffer);
 });
 
 let genericOperation = (operatorStr) =>{
-    //console.log(bottomDisplayBuffer, '========');
+    if (topDisplayBuffer == '00PS')
+    {
+        clearTopDisplay();
+        topDisplayBuffer = '';
+        operator = '';
+        return;
+    }
 
-    // jhandles situation, when user does operations one by onw without pressing the equals
+    // handles situation, when user does operations one by one without pressing the equals
     if (topDisplayBuffer != '' && bottomDisplayBuffer != '')
     {
         equalsButton.click();
         operator = operatorStr;
         return;
-    }
-    
-
-    if (topDisplayBuffer == '00PS')
-    {
-        clearTopDisplay();
-        topDisplayBuffer = '';
     }
 
     clearBottomDisplay();
@@ -332,29 +311,18 @@ let genericOperation = (operatorStr) =>{
     bottomNumber = 0;
 };
 
+// assign the appropriate functions to operator buttons
 let plusButton = document.querySelector('#plusButton');
+let minusButton = document.querySelector('#minusButton');
+let multiplyButton = document.querySelector('#multiplyButton');
+let divideButton = document.querySelector('#divideButton');
 
 plusButton.addEventListener("click", () => genericOperation('+'));
-
-let minusButton = document.querySelector('#minusButton');
 minusButton.addEventListener("click", () => genericOperation('-'));
-
-let multiplyButton = document.querySelector('#multiplyButton');
 multiplyButton.addEventListener("click", () => genericOperation('*'));
-
-let divideButton = document.querySelector('#divideButton');
 divideButton.addEventListener("click", () => genericOperation('/'));
 
-
-
-//==========================================================
-//====================Calculations SETUP====================
-//==========================================================
-//==========================================================
-
-
-
-
+// setup calculations
 function add(num1, num2)
 {
     return num1 + num2;
@@ -362,7 +330,6 @@ function add(num1, num2)
 
 function substract(num1, num2)
 {
-    console.log(num2 - num1, "======");
     return num1 - num2;
 }
 

@@ -104,14 +104,14 @@ body {
 .buttons {
     display:flex;
     flex-grow: 1;
-    flex-shrink: 1;
     padding :2%;
-    justify-content: space-between;
+    /*justify-content: space-between;*/
+    justify-content: space-evenly;
 }
 .numberKeys {
     display:flex;
     flex-wrap:wrap;
-    width:55%;
+    flex-basis:55%;
     justify-content: space-between;
     align-content: space-between;
 }
